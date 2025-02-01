@@ -1,8 +1,10 @@
 #Standard Library Imports
 import random
 
+from typing import Literal
+
 class Card:
-    def __init__(self, suite: "S" | 'C' | 'H' | 'D', face: int):
+    def __init__(self, suite: Literal["S", "C", "H", "D"], face: int):
         """
         1 --> ACE
         2 - 10 --> Number Cards
@@ -36,7 +38,7 @@ class Deck:
         #Shuffle the deck
         random.shuffle(self.cards)
 
-    def draw_card(self):
+    def draw_card(self) -> Card:
         if len(self.cards) <= 0:
             raise Exception("Deck is empty")
         return self.cards.pop(0)

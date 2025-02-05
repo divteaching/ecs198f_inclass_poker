@@ -42,3 +42,17 @@ class Deck:
         if len(self.cards) <= 0:
             raise Exception("Deck is empty")
         return self.cards.pop(0)
+
+    def __str__(self):
+        return_str = ""
+        for card in self.cards:
+            return_str += str(card)
+            return_str += "\n"
+        return return_str
+
+if __name__ == "__main__":
+    test_deck = Deck()
+    print(test_deck)
+
+    test_deck.shuffle()
+    print(test_deck)

@@ -7,6 +7,7 @@ class Player:
         self.is_small_blind = False
         self.curr_bet = 0
         self.has_raised = False
+        self.has_folded = False
 
     def add_card(self, card: Card):
         self.hand.append(card)
@@ -18,6 +19,8 @@ class Player:
         self.hand = []
         self.is_big_blind = False
         self.is_small_blind = False
+        self.has_raised = False
+        self.has_folded = False
 
     def set_curr_bet(self, bet: int):
         self.curr_bet = bet
@@ -36,9 +39,11 @@ class Player:
 class Controller:
     def __init__(self):
         self.players = []
-        self.blinds = [0, 1] #First index is the big blind, second index is the small blind
+        self.blinds = [1, 0] #First index is the big blind, second index is the small blind
         self.num_players = 0
         self.pot_amount = 0
+        self.blind_bets = [10, 5] #First index is the big blind bet amount, second index is the small blind bet amount
+        self.opened_cards = []
         self.deck = None
 
     def get_num_players(self):
@@ -92,35 +97,41 @@ class Controller:
         for curr_card in self.players[player_index].hand:
             print(curr_card)
 
-    def accept_bets(self):
+    def resolve_init_value_for_bets(self, round_num: int) -> list[int, int]:
+        if round_num == 1:
+            big_blind_player = self.players[self.blinds[0]]
+            small_blind_player = self.players[self.blinds[1]]
+            big_blind_player.curr_bet += self.blind_bets[0] #Make the big blind bet
+            small_blind_player.curr_bet += self.blind_bets[1] # Make the small blind bet
+
+            player_index_after_small_blind = self._get_next_player_index(self.blinds[0])
+            return [player_index_after_small_blind, self.blind_bets[0]]
+        else:
+            return [self.blinds[1], 0]
+
+    def accept_bets(self, start_player_index: int, init_curr_bet_amount: int):
         #This accepts bets from all the players
 
-        """
-        for curr_player_index, curr_player in enumerate(self.players):
-            self.display_hand_for_player(curr_player_index)
-            curr_player_bet = int(input(f"Player {curr_player_index + 1} Bet: "))
-            self.pot_amount += curr_player_bet
-            curr_player.set_curr_bet(curr_player_bet)
-        """
-
-        curr_player_index = 0 #Curr player to ask bet from
-        curr_bet_amount = 10 #The max amount that a person has bet
-        last_player_to_bet = len(self.players) - 1
+        curr_player_index = start_player_index #Curr player to ask bet from
+        curr_bet_amount = init_curr_bet_amount #The max amount that a person has bet
+        last_player_to_bet = self._get_prev_player_index(start_player_index) 
 
         while True:
-            self.display_hand_for_player(curr_player_index)
             is_continue = True
-            while is_continue:
+            while is_continue and not self.players[curr_player_index].has_folded:
                 is_continue = False
+                self.display_hand_for_player(curr_player_index)
                 curr_player_bet = int(input(f"Player {curr_player_index + 1} Bet: "))
                 total_bet_amount =  self.players[curr_player_index].curr_bet + curr_player_bet
-                if total_bet_amount < curr_bet_amount:
+                if total_bet_amount < 0:
+                    #Fold
+                    self.players[curr_player_index].has_folded = True
+                elif total_bet_amount < curr_bet_amount:
                     #Error: Prompt them again
                     is_continue = True
                 elif total_bet_amount == curr_bet_amount:
                     #Check
                     self.players[curr_player_index].curr_bet += curr_player_bet
-                    self.pot_amount += curr_player_bet
                 else:
                     #Raise
                     if self.players[curr_player_index].has_raised:
@@ -128,7 +139,6 @@ class Controller:
                         continue
                     curr_bet_amount = total_bet_amount
                     self.players[curr_player_index].curr_bet += curr_player_bet
-                    self.pot_amount += curr_player_bet
                     self.players[curr_player_index].has_raised = True
                     last_player_to_bet = self._get_prev_player_index(curr_player_index)
 
@@ -136,9 +146,27 @@ class Controller:
                 break
             curr_player_index = self._get_next_player_index(curr_player_index)
 
+    def clear_bets_per_player(self):
+        #Clear the bets that the players have made
+        for curr_player in self.players:
+            self.pot_amount += curr_player.curr_bet
+            curr_player.curr_bet = 0
+            curr_player.has_raised = False
 
+    def open_common_cards(self, round_num: int):
+        burn_card = self.deck.draw_card()
+        num_cards_to_draw = 1
+        if round_num == 1:
+            #Flop
+            num_cards_to_draw = 3
 
-
+        for i in range(num_cards_to_draw):
+            curr_card = self.deck.draw_card()
+            self.opened_cards.append(curr_card)
+    
+    def display_common_cards(self):
+        for curr_card in self.opened_cards:
+            print(curr_card)
 
     def play_game(self):
         #This should start the game
@@ -155,16 +183,42 @@ class Controller:
             self.init_players()
 
             #Step 3: Accept First Round of Bets
-            self.accept_bets()
-
-            """
-            for curr_player in self.players:
-                print(curr_player)
-            """
-
-            print(self.pot_amount)
+            print("First Round Bets")
+            bet_init_values = self.resolve_init_value_for_bets(1)
+            self.accept_bets(bet_init_values[0], bet_init_values[1])
             for curr_player in self.players:
                 print(curr_player.curr_bet)
+            
+            #Clear bets
+            self.clear_bets_per_player()
+            print(self.pot_amount)
+
+            #Step 4: Bets per player should be cleared. Flop opened (Open First Three Cards)
+            self.open_common_cards(1)
+
+            self.display_common_cards()
+
+            #Step 5: Accept Second Round of Bets
+            print("Second Round Bets")
+            bet_init_values = self.resolve_init_value_for_bets(2)
+            self.accept_bets(bet_init_values[0], bet_init_values[1])
+            
+            for curr_player in self.players:
+                print(curr_player.curr_bet)
+            
+            #Clear bets
+            self.clear_bets_per_player()
+            print(self.pot_amount)
+
+            #Step 6: Open one more card
+
+            #Step 7: Accept third round of bets
+
+            #Step 8: Open one more card
+
+            #Step 9: Final round of betting
+
+            #Step 10: Declare the winner
 
             #Step n: Move the blinds
             self.move_blinds()

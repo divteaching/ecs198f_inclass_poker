@@ -1,44 +1,9 @@
-from deck import Card, Deck
-
-class Player:
-    def __init__(self):
-        self.hand = []
-        self.is_big_blind = False
-        self.is_small_blind = False
-        self.curr_bet = 0
-        self.has_raised = False
-        self.has_folded = False
-
-    def add_card(self, card: Card):
-        self.hand.append(card)
-
-    def get_hand(self) -> list[Card]:
-        return self.hand
-    
-    def clear(self):
-        self.hand = []
-        self.is_big_blind = False
-        self.is_small_blind = False
-        self.has_raised = False
-        self.has_folded = False
-
-    def set_curr_bet(self, bet: int):
-        self.curr_bet = bet
-
-    def __str__(self):
-        return_str = ""
-        if self.is_big_blind:
-            return_str += "Big Blind\n"
-        elif self.is_small_blind:
-            return_str += "Small Blind\n"
-        return_str += "Deck:\n"
-        for curr_card in self.hand:
-            return_str += str(curr_card) + "\n"
-        return return_str
+from utils.deck import Deck
+from utils.player import Player
 
 class Controller:
     def __init__(self):
-        self.players = []
+        self.players: list[Player] = []
         self.blinds = [1, 0] #First index is the big blind, second index is the small blind
         self.num_players = 0
         self.pot_amount = 0
@@ -56,7 +21,6 @@ class Controller:
         for i in range(self.num_players):
             curr_player = Player()
             self.players.append(curr_player)
-
 
     def init_deck(self):
         self.deck = Deck()
@@ -165,8 +129,27 @@ class Controller:
             self.opened_cards.append(curr_card)
     
     def display_common_cards(self):
+        print("COMMON CARDS START")
         for curr_card in self.opened_cards:
             print(curr_card)
+        print("COMMON CARDS END")
+
+    def declare_winner(self):
+        best = self.players[0].idenitfy_class_of_hand(self.opened_cards)
+        best_player = 0
+        for i in range(1, len(self.players), 1):
+            curr_class = self.players[i].idenitfy_class_of_hand(self.opened_cards)
+            if curr_class[0] == 1 and best[0] == 1:
+                if curr_class[1].face > curr_class[1].face:
+                    best = curr_class
+                    best_player = i
+                continue
+            if curr_class[0] > best[0]:
+                best = curr_class
+                best_player = i
+        
+        print(f"Player {best_player + 1} wins ${self.pot_amount}!")
+        self.pot_amount = 0
 
     def play_game(self):
         #This should start the game
@@ -174,58 +157,29 @@ class Controller:
         #Step 0: Ask for num players
         self.get_num_players()
         #Game Loop
-        i = 0
-        while i < 3:
+        while True:
             #Step 1: Initialize the Deck
             self.init_deck()
 
             #Step 2: Initialize Players
             self.init_players()
 
-            #Step 3: Accept First Round of Bets
-            print("First Round Bets")
-            bet_init_values = self.resolve_init_value_for_bets(1)
-            self.accept_bets(bet_init_values[0], bet_init_values[1])
-            for curr_player in self.players:
-                print(curr_player.curr_bet)
+            for round_num in range(1, 4, 1):
+                #Step 3: Accept Bets
+                bet_init_values = self.resolve_init_value_for_bets(round_num)
+                self.accept_bets(bet_init_values[0], bet_init_values[1])
             
-            #Clear bets
-            self.clear_bets_per_player()
-            print(self.pot_amount)
+                #Clear bets
+                self.clear_bets_per_player()
 
-            #Step 4: Bets per player should be cleared. Flop opened (Open First Three Cards)
-            self.open_common_cards(1)
+                #Step 4: Open common card(s) 
+                self.open_common_cards(round_num)
 
-            self.display_common_cards()
+                #Step 5: Display common cards
+                self.display_common_cards()
 
-            #Step 5: Accept Second Round of Bets
-            print("Second Round Bets")
-            bet_init_values = self.resolve_init_value_for_bets(2)
-            self.accept_bets(bet_init_values[0], bet_init_values[1])
-            
-            for curr_player in self.players:
-                print(curr_player.curr_bet)
-            
-            #Clear bets
-            self.clear_bets_per_player()
-            print(self.pot_amount)
+            #Step 6: Declare the winner
+            self.declare_winner()
 
-            #Step 6: Open one more card
-
-            #Step 7: Accept third round of bets
-
-            #Step 8: Open one more card
-
-            #Step 9: Final round of betting
-
-            #Step 10: Declare the winner
-
-            #Step n: Move the blinds
+            #Step 7: Move the blinds
             self.move_blinds()
-
-            i += 1
-
-if __name__ == "__main__":
-    controller = Controller()
-
-    controller.play_game()

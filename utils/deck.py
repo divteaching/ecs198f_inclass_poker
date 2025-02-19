@@ -11,8 +11,9 @@ class Card:
         11 --> Jack
         12 --> Queen
         13 --> King
+        14 --> ACE
         """
-        if face < 1 or face > 14:
+        if face < 1 or face > 15:
             raise Exception("Invalid face")
 
         self.suite = suite
@@ -20,6 +21,17 @@ class Card:
 
     def __str__(self):
         return f"{self.suite}:{self.face}"
+    
+    def __eq__(self, other):
+        actual_face1 = self.face
+        actual_face2 = other.face
+        if actual_face1 == 14:
+            actual_face1 = 1
+        if actual_face2 == 14:
+            actual_face2 = 1
+
+        return (self.suite == other.suite) and (actual_face1 == actual_face2)
+        
     
 class Deck:
     def __init__(self):
@@ -49,10 +61,3 @@ class Deck:
             return_str += str(card)
             return_str += "\n"
         return return_str
-
-if __name__ == "__main__":
-    test_deck = Deck()
-    print(test_deck)
-
-    test_deck.shuffle()
-    print(test_deck)

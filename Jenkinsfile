@@ -13,7 +13,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 withPythonEnv('python') {
-                    sh "python --version"
+                    sh "python3 --version"
                 }
             }
         }

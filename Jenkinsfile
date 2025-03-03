@@ -13,6 +13,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 sh "/usr/bin/python3 --version"
+                sh "/usr/bin/pip3 install -r requirements.txt"
             }
         }
     }

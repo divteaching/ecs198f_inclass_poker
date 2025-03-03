@@ -167,7 +167,6 @@ class Player:
         
         return False, []
     
-    
     def is_three_of_a_kind(self, common_cards: list[Card]) -> tuple[bool, list[Card]]:
         all_cards = self.hand + common_cards
         all_groupings = self._check_num_cards_of_same_face(all_cards, 3)

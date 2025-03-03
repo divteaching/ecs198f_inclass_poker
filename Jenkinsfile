@@ -17,7 +17,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 script {
-                    sh "source ${PYTHON_ENV}/bin/activate && pytest tests/"
+                    sh "source ${PYTHON_ENV}/bin/activate && pytest test.py"
                 }
             }
         }

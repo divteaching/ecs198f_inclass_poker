@@ -6,18 +6,15 @@ pipeline {
     stages {
         stage('Python Envrionment Setup') {
             steps {
-                script {
-                    sh "python3 -m venv ${PYTHON_ENV}"
-                    sh "source ${PYTHON_ENV}/bin/activate"
-                    sh "pip install -r requirements.txt"
-                }
+                echo "Test :)"
             }
         }
 
         stage('Unit Tests') {
             steps {
-                script {
-                    sh "source ${PYTHON_ENV}/bin/activate && pytest test.py"
+                withPythonEnv('python') {
+                    sh "pip install -r requirements.txt"
+                    sh "pytest test.py"
                 }
             }
         }

@@ -6,6 +6,9 @@ Converts int into string
 def foo(n: int) -> str:
     return str(n)
 
+def test_fail():
+    assert(1 == 2)
+
 def test_test_unit_test():
     test1 = foo(10) # "10"
     assert(test1 == "10")
